@@ -7,7 +7,7 @@ on:
 
 
 jobs:
-  Test:
+  Lint:
     runs-on: ubuntu-latest
     steps:
     - name: checkout
@@ -33,6 +33,15 @@ jobs:
 
         # Optional: if set to true then the action will use pre-installed Go
         # skip-go-installation: true
+  Test-build-n-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2.3.4
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.15
     - name: test
       run: make test
     - name: upload coverage report
@@ -44,29 +53,29 @@ jobs:
         name: codecov-umbrella # optional
         fail_ci_if_error: true # optional (default = false)
         verbose: true # optional (default = false)
-  Deploy:
-    runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' }}
-    steps:
-    - name: update goreportcard
-      uses: creekorful/goreportcard-action@v1.0
     - name: Set up docker
       uses: docker/setup-buildx-action@v1.1.1
       with:
         install: true
         driver: docker
+    - name: update goreportcard
+      uses: creekorful/goreportcard-action@v1.0
+      if: ${{ github.ref == 'refs/heads/main' }}
     - name: heroku LOGIN
       uses: akhileshns/heroku-deploy@v3.8.9 
+      if: ${{ github.ref == 'refs/heads/main' }}
       with:
         heroku_api_key: ${{secrets.HEROKU_API_KEY}}
         heroku_app_name: "${{secrets.HEROKU_APP_NAME}}"
         heroku_email: "${{secrets.HEROKU_EMAIL}}"
         justlogin: true
     - name: dockerize
+      if: ${{ github.ref == 'refs/heads/main' }}
       run: |
         heroku container:login
         make package
         make push
     - name: deploy to heroku
+      if: ${{ github.ref == 'refs/heads/main' }}
       run: heroku container:release web -a ${{secrets.HEROKU_APP_NAME}}
   
