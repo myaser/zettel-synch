@@ -7,7 +7,7 @@ on:
 
 
 jobs:
-  CI:
+  Build_n_Test:
     runs-on: ubuntu-latest
     steps:
     - name: checkout
@@ -49,6 +49,12 @@ jobs:
       with:
         install: true
         driver: docker
+  Deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' }}
+    steps:
+    - name: update goreportcard
+      uses: creekorful/goreportcard-action@v1.0
     - name: heroku LOGIN
       uses: akhileshns/heroku-deploy@v3.8.9 
       with:
@@ -63,3 +69,4 @@ jobs:
         make push
     - name: deploy to heroku
       run: heroku container:release web -a ${{secrets.HEROKU_APP_NAME}}
+  
